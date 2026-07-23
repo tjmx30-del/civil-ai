@@ -1,26 +1,24 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import JSONResponse
+import fitz
 
-app = FastAPI(title="Civil AI")
+app = FastAPI()
 
 @app.get("/")
-def root():
-    return {
-        "status": "ok",
-        "app": "Civil AI",
-        "version": "1.0"
-    }
-
-@app.get("/health")
-def health():
-    return {
-        "health": "good"
-    }
+def home():
+    return {"status": "Civil AI Running"}
 
 @app.post("/analyze")
 async def analyze(file: UploadFile = File(...)):
+    pdf = fitz.open(stream=await file.read(), filetype="pdf")
+
+    text = ""
+
+    for page in pdf:
+        text += page.get_text()
+
     return JSONResponse({
-        "filename": file.filename,
-        "message": "PDF uploaded successfully",
-        "result": "AI analysis will be available in the next step."
+        "success": True,
+        "pages": len(pdf),
+        "text": text[:5000]
     })

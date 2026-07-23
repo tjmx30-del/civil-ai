@@ -1,32 +1,31 @@
 from fastapi import FastAPI, UploadFile, File
-from fastapi.responses import JSONResponse
 from openai import OpenAI
 import fitz
 import os
+import traceback
 
 app = FastAPI()
 
-client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY")
-)
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 @app.get("/")
 def home():
-    return {"status":"Civil AI Running"}
+    return {"status": "Civil AI Running"}
 
 @app.post("/analyze")
 async def analyze(file: UploadFile = File(...)):
-    pdf = fitz.open(
-        stream=await file.read(),
-        filetype="pdf"
-    )
+    try:
+        pdf = fitz.open(
+            stream=await file.read(),
+            filetype="pdf"
+        )
 
-    text = ""
+        text = ""
 
-    for page in pdf:
-        text += page.get_text()
+        for page in pdf:
+            text += page.get_text()
 
-    prompt = f"""
+        prompt = f"""
 คุณคือวิศวกรโยธา
 
 วิเคราะห์แบบก่อสร้างต่อไปนี้
@@ -35,27 +34,29 @@ async def analyze(file: UploadFile = File(...)):
 
 ให้ตอบเป็น
 
-1.สรุปแบบ
-
-2.ชนิดงาน
-
-3.รายการวัสดุ
-
-4.รายการที่ควรตรวจสอบ
-
-5.ข้อผิดพลาดที่พบ
+1. สรุปแบบ
+2. ชนิดงาน
+3. รายการวัสดุ
+4. รายการที่ควรตรวจสอบ
+5. ข้อผิดพลาดที่พบ
 """
 
-    response = client.chat.completions.create(
-        model="gpt-5",
-        messages=[
-            {
-                "role":"user",
-                "content":prompt
-            }
-        ]
-    )
+        response = client.chat.completions.create(
+            model="gpt-5",
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
+        )
 
-    return {
-        "analysis": response.choices[0].message.content
-    }
+        return {
+            "analysis": response.choices[0].message.content
+        }
+
+    except Exception as e:
+        return {
+            "error": str(e),
+            "trace": traceback.format_exc()
+        }

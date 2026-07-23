@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+python-multipart
+openai
+pdfplumber
+pymupdf
+Pillow
+opencv-python-headless
+numpy
